@@ -3,8 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Mic, AudioLines, Send, X } from 'lucide-react';
 
-const VOICE_CHOICE = 'shimmer';
-const VOICE_SPEED = 0.95;
+const VOICE_CHOICE = 'sage';
+const VOICE_SPEED = 1.0;
 
 interface ChatInterfaceProps {
   inPanel?: boolean;
@@ -111,13 +111,26 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     // Add user message immediately
     setChatMessages(prev => [...prev, { text, sender: 'user', timestamp: Date.now() }]);
     
+    // Get current time of day
+    const hour = new Date().getHours();
+    let timeContext = '';
+    if (hour >= 5 && hour < 12) {
+      timeContext = 'It is morning time. ';
+    } else if (hour >= 12 && hour < 17) {
+      timeContext = 'It is afternoon time. ';
+    } else if (hour >= 17 && hour < 21) {
+      timeContext = 'It is evening time. ';
+    } else {
+      timeContext = 'It is nighttime. ';
+    }
+    
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: text,
-          context: 'You are Flower, a casual chat companion. Keep responses brief and friendly.'
+          context: timeContext + 'You are Flower, a friendly and helpful home companion for families. Be warm, cheerful, and supportive. Use clear, simple language that everyone can understand. Keep responses brief and natural. Be encouraging and positive. Adapt your tone based on what the user shares - if they sound young, keep it simple; if they sound like an adult, respond naturally. Never assume the user is a child.'
         })
       });
       
@@ -313,16 +326,6 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
         e.stopPropagation();
       }}
     >
-      {chatMessages.length > 0 && (
-        <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 bg-white/50">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-600">Chat</span>
-            <button onClick={clearChat} className="p-1 rounded-full hover:bg-gray-100">
-              <X size={14} className="text-gray-500" />
-            </button>
-          </div>
-        </div>
-      )}
 
       <div 
         ref={chatContainerRef}
@@ -418,7 +421,7 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
               // Also update React state from raw input
               setTextInput(target.value);
             }}
-            placeholder="Type a message..."
+            placeholder="Type a message or speak with Flower"
             disabled={isProcessing}
             className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400 disabled:opacity-50"
             autoComplete="off"

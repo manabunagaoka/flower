@@ -6,7 +6,7 @@ const openai = new OpenAI({
 });
 
 export async function POST(request: Request) {
-  const { text, voice = 'shimmer', speed = 1.0 } = await request.json();
+  const { text, voice = 'sage', speed = 1.0 } = await request.json();
   
   try {
     const mp3 = await openai.audio.speech.create({

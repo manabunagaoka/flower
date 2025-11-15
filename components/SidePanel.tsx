@@ -7,7 +7,7 @@ import {
   Phone, Heart, AlertTriangle, Stethoscope, Users, Users2, Baby, Coffee,
   Sparkles, Car, UtensilsCrossed, BookOpen, Palette, Trees, Book, Music,
   Plus, Search, Shield, FileText, GraduationCap, Zap, PenTool, User,
-  Building, ShoppingBag, DollarSign, PlayCircle, Grid3x3, MessageCircle
+  Building, ShoppingBag, DollarSign, PlayCircle, Grid3x3, MessageCircle, Mic, AudioLines
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { ContentItem } from '@/lib/types';
@@ -19,7 +19,7 @@ const contentIconMap = {
   Phone, Heart, AlertTriangle, Stethoscope, Users, Users2, Baby, Coffee,
   Sparkles, Car, UtensilsCrossed, BookOpen, Palette, Trees, Book, Music,
   Plus, Search, Shield, FileText, GraduationCap, Zap, PenTool, User,
-  Building, ShoppingBag, DollarSign, PlayCircle, Grid3x3, MessageCircle
+  Building, ShoppingBag, DollarSign, PlayCircle, Grid3x3, MessageCircle, Mic, AudioLines
 };
 
 interface SidePanelProps {
@@ -32,13 +32,16 @@ interface SidePanelProps {
 export default function SidePanel({ isOpen, onClose, title, content }: SidePanelProps) {
   const [showChat, setShowChat] = useState(false);
   const isConnect = title.toLowerCase() === 'connect';
+  const isChat = title.toLowerCase() === 'chat';
 
-  // Reset chat when panel closes
+  // Reset chat when panel closes, or auto-open chat for chat menu
   React.useEffect(() => {
     if (!isOpen) {
       setShowChat(false);
+    } else if (isChat) {
+      setShowChat(true);
     }
-  }, [isOpen]);
+  }, [isOpen, isChat]);
   return (
     <AnimatePresence>
       {isOpen && (
@@ -85,7 +88,7 @@ export default function SidePanel({ isOpen, onClose, title, content }: SidePanel
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
               <h2 className="text-xl font-semibold text-gray-800 capitalize">
-                {title}
+                {isChat ? 'Chat' : title}
               </h2>
               <button
                 onClick={onClose}
@@ -103,6 +106,7 @@ export default function SidePanel({ isOpen, onClose, title, content }: SidePanel
 
             {/* Content */}
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              {!isChat && (
               <div className={clsx(
                 'p-4 space-y-3',
                 showChat ? 'flex-shrink-0 overflow-y-auto max-h-48' : 'flex-1 overflow-y-auto'
@@ -126,7 +130,7 @@ export default function SidePanel({ isOpen, onClose, title, content }: SidePanel
                         'cursor-pointer group'
                       )}
                       onClick={() => {
-                        if (isConnect && (item.title.toLowerCase().includes('chat') || item.title.toLowerCase().includes('support') || item.title.toLowerCase().includes('talk'))) {
+                        if ((isConnect && (item.title.toLowerCase().includes('chat') || item.title.toLowerCase().includes('support') || item.title.toLowerCase().includes('talk'))) || isChat) {
                           setShowChat(true);
                         }
                       }}
@@ -182,6 +186,7 @@ export default function SidePanel({ isOpen, onClose, title, content }: SidePanel
                   );
                 })}
               </div>
+              )}
               
               {/* Chat positioned right after content for Connect panel */}
               <AnimatePresence>
@@ -204,15 +209,9 @@ export default function SidePanel({ isOpen, onClose, title, content }: SidePanel
                       borderTop: '2px solid #e5e7eb'
                     }}
                   >
-                    {/* Chat Header with Close Button */}
+                    {/* Chat Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
-                      <span className="text-sm font-medium text-gray-700">Chat Support</span>
-                      <button
-                        onClick={() => setShowChat(false)}
-                        className="p-1 rounded-full hover:bg-gray-200 transition-colors"
-                      >
-                        <X size={16} className="text-gray-500" />
-                      </button>
+                      <span className="text-sm font-medium text-gray-700">Speak with Flower</span>
                     </div>
                     <ChatInterface inPanel={true} />
                   </motion.div>

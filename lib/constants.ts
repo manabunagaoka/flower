@@ -35,11 +35,11 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
     angle: 135, // 4:30 position
   },
   {
-    id: 'jobs',
-    title: 'Jobs',
-    icon: 'Briefcase',
-    color: '#fd9644',
-    borderColor: '#e17055',
+    id: 'chat',
+    title: 'Chat',
+    icon: 'AudioLines',
+    color: '#45b7d1',
+    borderColor: '#0984e3',
     angle: 180, // 6 o'clock
   },
   {
@@ -225,26 +225,11 @@ export const MENU_CONTENT: MenuContent = {
       time: 'Fri 2PM',
     },
   ],
-  jobs: [
+  chat: [
     {
-      icon: 'Plus',
-      title: 'Post Job',
-      description: 'Create a new job posting',
-    },
-    {
-      icon: 'Search',
-      title: 'Browse',
-      description: '28 available',
-    },
-    {
-      icon: 'Shield',
-      title: 'Verify',
-      description: 'Background checks',
-    },
-    {
-      icon: 'FileText',
-      title: 'Contracts',
-      description: 'Manage agreements',
+      icon: 'AudioLines',
+      title: 'Voice Chat',
+      description: 'Talk with AI assistant',
     },
   ],
   schedule: [

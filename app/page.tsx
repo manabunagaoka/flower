@@ -164,26 +164,40 @@ export default function HomePage() {
         WebkitOverflowScrolling: 'auto',
         height: '100vh',
         width: '100vw',
-        position: 'relative'
+        position: 'fixed',
+        top: 0,
+        left: 0
       }}
     >
-      {/* Header - 72px total height */}
-      <header className="flex justify-between items-center p-6 bg-white border-b border-gray-100">
-        <h1 className="text-xl font-semibold text-gray-600">Flower</h1>
-        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          <MoreVertical size={20} className="text-gray-500" />
+      {/* Header */}
+      <header className="flex justify-between items-center p-4 bg-[#5cb85c] border-b border-green-600">
+        <h1 className="text-xl font-semibold text-white">123 Sesame Street</h1>
+        <button className="p-2 hover:bg-green-600 rounded-lg transition-colors">
+          <MoreVertical size={20} className="text-white" />
         </button>
       </header>
       
-      {/* Main content with proper centering */}
-      <main className="flex-1 flex flex-col">
-        {/* Top spacer - creates balanced spacing */}
-        <div className="flex-1"></div>
+      {/* Main Layout - Upper Content + Lower Wheel */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Content Window - Upper Half */}
+        <div className="flex-1 bg-white overflow-y-auto p-4">
+          {!isMenuOpen && (
+            <div className="flex items-center justify-center h-full">
+              <motion.p 
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: ANIMATION_DURATION }}
+                className="text-2xl text-gray-600 font-light text-center"
+              >
+                {greeting}
+              </motion.p>
+            </div>
+          )}
+        </div>
         
-        {/* Centered content block - Hi button and greeting as a unit */}
-        <div className="flex flex-col items-center px-4">
-          {/* Circle Container - iPod layout */}
-          <div className="relative w-[85vw] h-[85vw] max-w-[600px] max-h-[600px] min-w-[400px] min-h-[400px] flex items-center justify-center">
+        {/* Wheel Container - Lower Bottom */}
+        <div className="bg-gray-50 flex items-center justify-center p-4" style={{ minHeight: '50vh' }}>
+          <div className="relative w-[80vw] h-[80vw] max-w-[400px] max-h-[400px] flex items-center justify-center">
             {/* Menu Wheel */}
             <AnimatePresence mode="wait">
               {isMenuOpen && (
@@ -211,7 +225,7 @@ export default function HomePage() {
               )}
             </AnimatePresence>
 
-            {/* iPod Track Wheel - Always visible and centered */}
+            {/* iPod Track Wheel */}
             <div className="absolute inset-0 flex items-center justify-center">
               <TrackWheel
                 isMenuOpen={isMenuOpen}
@@ -224,28 +238,8 @@ export default function HomePage() {
               />
             </div>
           </div>
-          
-          {/* Greeting - responsive spacing */}
-          {!isMenuOpen && (
-            <AnimatePresence>
-              <motion.p 
-                initial={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: ANIMATION_DURATION }}
-                className="text-xl text-gray-600 font-light mt-4 md:mt-6 text-center"
-              >
-                {greeting}
-              </motion.p>
-            </AnimatePresence>
-          )}
         </div>
-        
-        {/* Bottom spacer - maintains ratio */}
-        <div className="flex-1"></div>
       </main>
-      
-      {/* Footer space - same height as header for symmetry */}
-      <div className="h-[72px]"></div>
 
       {/* Side Panel */}
       <SidePanel

@@ -9,14 +9,16 @@ import {
   Calendar, 
   Briefcase, 
   Clock, 
-  MessageCircle, 
+  MessageCircle,
+  MessageSquare,
   MoreHorizontal,
   ShoppingBag,
   GraduationCap,
   DollarSign,
   PlayCircle,
   Grid3x3,
-  Plane
+  Plane,
+  AudioLines
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { MAIN_MENU_ITEMS, MORE_MENU_ITEMS, MENU_RADIUS, MENU_BUTTON_SIZE, ANIMATION_DURATION, STAGGER_DELAY } from '@/lib/constants';
@@ -30,6 +32,7 @@ const iconMap = {
   Briefcase,
   Clock,
   MessageCircle,
+  MessageSquare,
   MoreHorizontal,
   ShoppingBag,
   GraduationCap,
@@ -37,6 +40,7 @@ const iconMap = {
   PlayCircle,
   Grid3x3,
   Plane,
+  AudioLines,
 };
 
 interface MenuWheelProps {
