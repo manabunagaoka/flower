@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Custom utilities */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Mobile-first responsive design */
+  .mobile-container {
+    max-width: 420px;
+    margin: 0 auto;
+    min-height: 100vh;
+  }
+  
+  /* Smooth transitions for all interactive elements */
+  .smooth-transition {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  /* Shadow utilities for depth */
+  .shadow-soft {
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-menu {
+    box-shadow: 0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* Animation keyframes */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Focus styles for accessibility */
+.focus-visible {
+  outline: none;
+}
+
+.focus-visible:focus {
+  outline: 2px solid rgb(147 197 253);
+  outline-offset: 2px;
+}
+
+/* Custom component styles */
+.menu-button {
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-width: 2px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.menu-button:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: scale(1.1);
+}
+
+.menu-button:active {
+  transform: scale(0.95);
+}
+
+.menu-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(147 197 253);
+}
+
+.side-panel-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: rgb(249 250 251);
+  transition: colors 0.2s ease-in-out;
+  border: 1px solid rgb(229 231 235);
+  cursor: pointer;
+}
+
+.side-panel-item:hover {
+  background-color: rgb(243 244 246);
+  border-color: rgb(209 213 219);
+}
+
+/* Ensure proper stacking context for modals and overlays */
+.modal-backdrop {
+  z-index: 40;
+}
+
+.modal-content {
+  z-index: 50;
+}

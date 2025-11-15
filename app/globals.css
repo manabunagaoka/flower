@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* COMPLETELY prevent elastic/bounce scrolling everywhere */
+html {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: auto;
+  scroll-behavior: auto;
+  height: 100%;
+}
+
+body {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none; 
+  overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: auto;
+  min-height: 100%;
+  height: 100%;
+}
+
+#__next {
+  min-height: 100vh;
+  height: 100vh;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+/* Stabilize ALL containers */
+*, *::before, *::after {
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior: none;
+}
+
+/* Prevent rubber band effect on all scrollable elements */
+div, section, main, article {
+  overscroll-behavior: contain;
+}
+
+/* Completely disable momentum scrolling on iOS */
+@supports (-webkit-touch-callout: none) {
+  * {
+    -webkit-overflow-scrolling: auto !important;
+    overscroll-behavior: none !important;
+  }
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  height: 100vh;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation keyframes */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes voice-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Ensure proper stacking context for modals and overlays */
+.modal-backdrop {
+  z-index: 40;
+}
+
+.modal-content {
+  z-index: 50;
+}
