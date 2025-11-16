@@ -388,7 +388,7 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-2" 
         style={{ 
-          paddingBottom: '140px',
+          paddingBottom: '200px',
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'thin'
@@ -440,17 +440,16 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
         style={{
           position: 'absolute',
           zIndex: 110,
-          paddingTop: '16px',
-          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+          paddingTop: '12px',
+          paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
           paddingLeft: '16px',
           paddingRight: '16px',
           boxShadow: '0 -4px 12px -4px rgba(0, 0, 0, 0.08)',
           borderTop: '1px solid rgba(0, 0, 0, 0.06)'
         }}
       >
-        <div 
-          className="flex items-center gap-3 pb-2"
-        >
+        {/* Text Input Area - Full Width */}
+        <div className="mb-4 flex items-center gap-2 px-2">
           <input
             ref={inputRef}
             type="text"
@@ -486,7 +485,7 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
             }}
             placeholder="Type or speak..."
             disabled={isProcessing}
-            className="flex-1 bg-transparent text-base outline-none placeholder-gray-500 disabled:opacity-50 py-2"
+            className="flex-1 bg-gray-50 text-base outline-none placeholder-gray-500 disabled:opacity-50 px-4 py-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500"
             autoComplete="off"
             autoFocus
             spellCheck="false"
@@ -494,11 +493,15 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
           {(textInput.trim() || (inputRef.current?.value?.trim())) && !isProcessing && (
             <button 
               onClick={handleTextSubmit} 
-              className="p-3 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+              className="p-3 rounded-lg bg-green-500 hover:bg-green-600 active:bg-green-700 transition-colors"
             >
-              <Send size={22} className="text-gray-600" />
+              <Send size={22} className="text-white" />
             </button>
           )}
+        </div>
+
+        {/* Bottom Button Row - Centered */}
+        <div className="flex items-center justify-center gap-6">
           <button 
             onClick={(e) => {
               e.preventDefault();
@@ -507,14 +510,33 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
               startVoiceConversation();
             }}
             disabled={isProcessing}
-            className="p-3 rounded-lg bg-red-50 hover:bg-red-100 active:bg-red-200 transition-colors disabled:opacity-50 disabled:bg-gray-100"
+            className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-red-50 hover:bg-red-100 active:bg-red-200 transition-colors disabled:opacity-50 disabled:bg-gray-100 min-w-[80px]"
             type="button"
           >
             {conversationActive.current || isListening ? (
-              <AudioLines size={22} className="text-blue-500 animate-pulse" />
+              <AudioLines size={32} className="text-blue-500 animate-pulse" />
             ) : (
-              <Mic size={22} className="text-red-500" />
+              <Mic size={32} className="text-red-500" />
             )}
+            <span className="text-xs text-gray-600 font-medium">
+              {conversationActive.current || isListening ? 'Listening' : 'Speak'}
+            </span>
+          </button>
+          
+          <button 
+            onClick={() => {
+              if (inputRef.current) {
+                inputRef.current.focus();
+              }
+            }}
+            className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[80px]"
+            type="button"
+          >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+            </svg>
+            <span className="text-xs text-gray-600 font-medium">Type</span>
           </button>
         </div>
       </div>
