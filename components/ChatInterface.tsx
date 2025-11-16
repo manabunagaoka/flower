@@ -287,6 +287,7 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
 
   const startVoiceConversation = async () => {
     console.log('Voice button clicked, conversationActive:', conversationActive.current);
+    alert('Voice button clicked! conversationActive: ' + conversationActive.current);
     
     if (conversationActive.current) {
       console.log('Stopping conversation');
@@ -295,6 +296,7 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     }
     
     console.log('Starting voice conversation');
+    alert('About to start voice conversation');
     conversationActive.current = true;
     
     // Pre-create audio element on user interaction (iOS requirement)
