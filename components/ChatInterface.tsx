@@ -386,9 +386,9 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
 
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-3 space-y-2" 
+        className="flex-1 overflow-y-auto p-4 space-y-2" 
         style={{ 
-          paddingBottom: '180px',
+          paddingBottom: '140px',
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'thin'
@@ -435,15 +435,18 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
       </div>
       
       <div 
-        className="absolute bottom-0 left-0 right-0 p-4 bg-gray-50/80 backdrop-blur-sm border-t border-gray-200"
+        className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200"
         style={{
           position: 'absolute',
           zIndex: 110,
-          minHeight: '160px'
+          paddingTop: '16px',
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+          paddingLeft: '16px',
+          paddingRight: '16px'
         }}
       >
         <div 
-          className="bg-white rounded-full px-6 py-5 flex items-center gap-4 shadow-sm border border-gray-200"
+          className="flex items-center gap-3 pb-3 border-b border-gray-200"
         >
           <input
             ref={inputRef}
@@ -480,25 +483,28 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
             }}
             placeholder="Type or speak..."
             disabled={isProcessing}
-            className="flex-1 bg-transparent text-base outline-none placeholder-gray-400 disabled:opacity-50"
+            className="flex-1 bg-transparent text-base outline-none placeholder-gray-500 disabled:opacity-50 py-2"
             autoComplete="off"
             autoFocus
             spellCheck="false"
           />
           {(textInput.trim() || (inputRef.current?.value?.trim())) && !isProcessing && (
-            <button onClick={handleTextSubmit} className="p-3 rounded-full hover:bg-gray-100">
-              <Send size={20} className="text-gray-600" />
+            <button 
+              onClick={handleTextSubmit} 
+              className="p-3 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+            >
+              <Send size={22} className="text-gray-600" />
             </button>
           )}
           <button 
             onClick={startVoiceConversation}
             disabled={isProcessing}
-            className="p-3 rounded-full hover:bg-red-50 transition-all disabled:opacity-50"
+            className="p-3 rounded-lg bg-red-50 hover:bg-red-100 active:bg-red-200 transition-colors disabled:opacity-50 disabled:bg-gray-100"
           >
             {conversationActive.current || isListening ? (
-              <AudioLines size={20} className="text-blue-500 animate-pulse" />
+              <AudioLines size={22} className="text-blue-500 animate-pulse" />
             ) : (
-              <Mic size={20} className="text-red-500" />
+              <Mic size={22} className="text-red-500" />
             )}
           </button>
         </div>
