@@ -148,14 +148,16 @@ export default function HomePage() {
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'auto',
         height: '100vh',
+        height: '100dvh',
         width: '100vw',
         position: 'fixed',
         top: 0,
-        left: 0
+        left: 0,
+        paddingTop: 'env(safe-area-inset-top)',
       }}
     >
       {/* Header */}
-      <header className="flex justify-between items-center p-4 bg-[#5cb85c] border-b border-green-600">
+      <header className="flex justify-between items-center p-4 bg-[#5cb85c] border-b border-green-600" style={{ flexShrink: 0 }}>
         <h1 className="text-xl font-semibold text-white">123 Sesame Street</h1>
         <button className="p-2 hover:bg-green-600 rounded-lg transition-colors">
           <MoreVertical size={20} className="text-white" />
@@ -163,9 +165,9 @@ export default function HomePage() {
       </header>
       
       {/* Main Layout - Upper Content + Lower Wheel */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden" style={{ minHeight: 0 }}>
         {/* Content Window - Upper Half */}
-        <div className="flex-1 bg-white overflow-y-auto p-4">
+        <div className="flex-1 bg-white overflow-y-auto p-4" style={{ minHeight: 0 }}>
           {!selectedContent ? (
             <div className="flex flex-col items-center justify-center h-full gap-4">
               <img src="/gif/elmo.gif" alt="Elmo" className="w-32 h-32 object-cover rounded-full" />
@@ -186,7 +188,7 @@ export default function HomePage() {
                   <div className="flex-1 flex items-center justify-center bg-white overflow-hidden">
                     <div className="relative w-full" style={{ paddingTop: '56.25%', maxHeight: '100%' }}>
                       <iframe
-                        src={`https://fast.wistia.net/embed/iframe/${selectedContent.videoId}?playsinline=1&seo=false&videoFoam=true`}
+                        src={`https://fast.wistia.net/embed/iframe/${selectedContent.videoId}?playsinline=1&controlsVisibleOnLoad=true&playerColor=54bb6a&plugin%5BpostRoll-v1%5D%5Btext%5D=&volume=1`}
                         title={selectedContent.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                         allowFullScreen

@@ -1,0 +1,17 @@
+{
+  "name": "Flower - 123 Sesame Street",
+  "short_name": "Flower",
+  "description": "Parenting community platform with intuitive iPod-style navigation",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4ade80",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
