@@ -19,7 +19,7 @@ import {
   Grid3x3,
   Plane,
   AudioLines,
-  Flower2,
+  MessageCircleHeart,
   Gamepad2
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -43,7 +43,7 @@ const iconMap = {
   Grid3x3,
   Plane,
   AudioLines,
-  Flower2,
+  MessageCircleHeart,
   Gamepad2,
 };
 

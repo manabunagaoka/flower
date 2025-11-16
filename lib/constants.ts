@@ -37,7 +37,7 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
   {
     id: 'chat',
     title: 'Chat',
-    icon: 'Flower2',
+    icon: 'MessageCircleHeart',
     color: '#f9ca24',
     borderColor: '#e1b12c',
     angle: 180, // 6 o'clock

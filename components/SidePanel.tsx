@@ -7,7 +7,7 @@ import {
   Phone, Heart, AlertTriangle, Stethoscope, Users, Users2, Baby, Coffee,
   Sparkles, Car, UtensilsCrossed, BookOpen, Palette, Trees, Book, Music,
   Plus, Search, Shield, FileText, GraduationCap, Zap, PenTool, User,
-  Building, ShoppingBag, DollarSign, PlayCircle, Grid3x3, MessageCircle, Mic, AudioLines, Flower2
+  Building, ShoppingBag, DollarSign, PlayCircle, Grid3x3, MessageCircle, Mic, AudioLines, MessageCircleHeart
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { ContentItem } from '@/lib/types';
@@ -19,7 +19,7 @@ const contentIconMap = {
   Phone, Heart, AlertTriangle, Stethoscope, Users, Users2, Baby, Coffee,
   Sparkles, Car, UtensilsCrossed, BookOpen, Palette, Trees, Book, Music,
   Plus, Search, Shield, FileText, GraduationCap, Zap, PenTool, User,
-  Building, ShoppingBag, DollarSign, PlayCircle, Grid3x3, MessageCircle, Mic, AudioLines, Flower2
+  Building, ShoppingBag, DollarSign, PlayCircle, Grid3x3, MessageCircle, Mic, AudioLines, MessageCircleHeart
 };
 
 interface SidePanelProps {
@@ -109,7 +109,7 @@ export default function SidePanel({ isOpen, onClose, title, content, onContentSe
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               {!isChat && (
               <div className={clsx(
-                'p-4 space-y-3',
+                'space-y-0',
                 showChat ? 'flex-shrink-0 overflow-y-auto max-h-48' : 'flex-1 overflow-y-auto'
               )}>
                 {content.map((item, index) => {
@@ -125,9 +125,9 @@ export default function SidePanel({ isOpen, onClose, title, content, onContentSe
                         duration: ANIMATION_DURATION 
                       }}
                       className={clsx(
-                        'flex items-center p-3 rounded-lg',
-                        'bg-gray-50 hover:bg-gray-100 transition-colors duration-200',
-                        'border border-gray-200 hover:border-gray-300',
+                        'flex items-center p-4',
+                        'bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors duration-200',
+                        'border-b border-gray-100',
                         'cursor-pointer group'
                       )}
                       onClick={() => {
@@ -141,35 +141,35 @@ export default function SidePanel({ isOpen, onClose, title, content, onContentSe
                     >
                       {/* Icon or Thumbnail */}
                       {item.videoId && item.thumbnail ? (
-                        <div className="relative w-20 h-14 flex-shrink-0 rounded overflow-hidden border border-gray-200">
+                        <div className="relative w-24 h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-100">
                           <img 
                             src={item.thumbnail} 
                             alt={item.title}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                            <PlayCircle size={24} className="text-white" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
+                            <PlayCircle size={28} className="text-white drop-shadow" />
                           </div>
                         </div>
                       ) : (
                         <div className={clsx(
-                          'flex items-center justify-center rounded-full',
-                          'w-10 h-10 bg-white border border-gray-200',
-                          'group-hover:border-gray-300 transition-colors duration-200'
+                          'flex items-center justify-center',
+                          'w-12 h-12 bg-gray-50 rounded-full',
+                          'group-hover:bg-gray-100 transition-colors duration-200'
                         )}>
                           {IconComponent && (
                             <IconComponent 
-                              size={18} 
-                              className="text-gray-600 group-hover:text-gray-700" 
+                              size={20} 
+                              className="text-gray-600" 
                             />
                           )}
                         </div>
                       )}
 
                       {/* Content */}
-                      <div className="ml-3 flex-1 min-w-0">
+                      <div className="ml-4 flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-medium text-gray-900 truncate">
+                          <h3 className="text-base font-medium text-gray-900 truncate">
                             {item.title}
                           </h3>
                           {item.time && (
@@ -178,15 +178,15 @@ export default function SidePanel({ isOpen, onClose, title, content, onContentSe
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5 truncate">
+                        <p className="text-sm text-gray-500 mt-1 truncate">
                           {item.description}
                         </p>
                       </div>
 
                       {/* Chevron */}
-                      <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="ml-3 transition-transform duration-200 group-hover:translate-x-1">
                         <svg 
-                          className="w-4 h-4 text-gray-400" 
+                          className="w-5 h-5 text-gray-400" 
                           fill="none" 
                           stroke="currentColor" 
                           viewBox="0 0 24 24"

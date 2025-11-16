@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Play, AlertCircle, Users, GraduationCap, Calendar, Flower2, Clock, Gamepad2, ShoppingBag } from 'lucide-react';
+import { Play, AlertCircle, Users, GraduationCap, Calendar, MessageCircleHeart, Clock, Gamepad2, ShoppingBag } from 'lucide-react';
 import { MenuItem } from '@/lib/types';
 
 interface TrackWheelProps {
@@ -147,7 +147,7 @@ export default function TrackWheel({
       'Users': <Users size={40} style={{ color: selectedItem.color }} />,
       'GraduationCap': <GraduationCap size={40} style={{ color: selectedItem.color }} />,
       'Calendar': <Calendar size={40} style={{ color: selectedItem.color }} />,
-      'Flower2': <Flower2 size={40} style={{ color: selectedItem.color }} />,
+      'MessageCircleHeart': <MessageCircleHeart size={40} style={{ color: selectedItem.color }} />,
       'Clock': <Clock size={40} style={{ color: selectedItem.color }} />,
       'Gamepad2': <Gamepad2 size={40} style={{ color: selectedItem.color }} />,
       'ShoppingBag': <ShoppingBag size={40} style={{ color: selectedItem.color }} />,
