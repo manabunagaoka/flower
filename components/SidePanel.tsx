@@ -215,27 +215,19 @@ export default function SidePanel({ isOpen, onClose, title, content, onContentSe
               <AnimatePresence>
                 {showChat && (
                   <motion.div 
-                    initial={{ height: 0, opacity: 0, y: 20 }}
-                    animate={{ height: 'auto', opacity: 1, y: 0 }}
-                    exit={{ height: 0, opacity: 0, y: 20 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     transition={{ 
-                      duration: 0.3, 
-                      ease: "easeInOut",
-                      height: { duration: 0.4 }
+                      duration: 0.2
                     }}
-                    className="flex-1 flex flex-col min-h-0 mt-4 mx-4 mb-4 rounded-lg border border-gray-200 shadow-lg bg-white overflow-hidden"
+                    className="flex-1 flex flex-col min-h-0 bg-white overflow-hidden"
                     style={{
                       overscrollBehavior: 'none',
                       position: 'relative',
-                      minHeight: '400px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                      borderTop: '2px solid #e5e7eb'
+                      minHeight: '400px'
                     }}
                   >
-                    {/* Chat Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
-                      <span className="text-sm font-medium text-gray-700">Speak with Flower</span>
-                    </div>
                     <ChatInterface inPanel={true} />
                   </motion.div>
                 )}
