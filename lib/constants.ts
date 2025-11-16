@@ -1,4 +1,4 @@
-import { MenuItem, ContentItem, MenuContent } from './types';
+import { MenuItem, MenuContent } from './types';
 
 // Main menu items arranged in circle formation
 export const MAIN_MENU_ITEMS: MenuItem[] = [
@@ -319,13 +319,6 @@ export const MENU_CONTENT: MenuContent = {
       icon: 'Shield',
       title: 'Safety Tips',
       description: 'Stay safe online',
-    },
-  ],
-  market: [
-    {
-      icon: 'ShoppingBag',
-      title: 'Coming Soon',
-      description: 'Marketplace features',
     },
   ],
   learn: [

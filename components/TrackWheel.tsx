@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Compass, Play, AlertCircle, Users, GraduationCap, Calendar, Flower2, Clock, Gamepad2, ShoppingBag } from 'lucide-react';
+import { Play, AlertCircle, Users, GraduationCap, Calendar, Flower2, Clock, Gamepad2, ShoppingBag } from 'lucide-react';
 import { MenuItem } from '@/lib/types';
 
 interface TrackWheelProps {

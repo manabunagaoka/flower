@@ -1,7 +1,8 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Mic, AudioLines, Send, X } from 'lucide-react';
+import { MessageCircle, Mic, AudioLines, Send } from 'lucide-react';
 
 const VOICE_CHOICE = 'sage';
 const VOICE_SPEED = 1.05;

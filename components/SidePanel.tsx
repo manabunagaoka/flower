@@ -131,11 +131,9 @@ export default function SidePanel({ isOpen, onClose, title, content, onContentSe
                         'cursor-pointer group'
                       )}
                       onClick={() => {
-                        console.log('Item clicked:', item);
                         if ((isConnect && (item.title.toLowerCase().includes('chat') || item.title.toLowerCase().includes('support') || item.title.toLowerCase().includes('talk'))) || isChat) {
                           setShowChat(true);
                         } else {
-                          console.log('Calling onContentSelect with:', item);
                           onContentSelect(item);
                           onClose();
                         }

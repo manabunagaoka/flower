@@ -19,37 +19,9 @@ export default function HomePage() {
   }>({ title: '', content: [] });
   const [wheelAngle, setWheelAngle] = useState<number>(0);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
-  const [greeting, setGreeting] = useState('Good evening');
-
-  // Debug logging
-  useEffect(() => {
-    if (selectedContent) {
-      console.log('Selected content:', selectedContent);
-    }
-  }, [selectedContent]);
 
   const isMenuOpen = menuState !== 'closed';
   const currentMenuItems = menuState === 'more' ? MORE_MENU_ITEMS : MAIN_MENU_ITEMS;
-
-  useEffect(() => {
-    // Update greeting on client side only
-    const updateGreeting = () => {
-      const hour = new Date().getHours();
-      if (hour >= 5 && hour < 12) {
-        setGreeting('Good morning');
-      } else if (hour >= 12 && hour < 17) {
-        setGreeting('Good afternoon');
-      } else {
-        // Everything else is evening (17-5)
-        setGreeting('Good evening');
-      }
-    };
-
-    updateGreeting();
-    // Update every minute
-    const interval = setInterval(updateGreeting, 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Find closest menu item based on wheel angle
   const findClosestMenuItem = (angle: number) => {
@@ -194,7 +166,6 @@ export default function HomePage() {
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Content Window - Upper Half */}
         <div className="flex-1 bg-white overflow-y-auto p-4">
-          {console.log('Rendering content area, selectedContent:', selectedContent)}
           {!selectedContent ? (
             <div className="flex flex-col items-center justify-center h-full gap-4">
               <img src="/gif/elmo.gif" alt="Elmo" className="w-32 h-32 object-cover rounded-full" />
@@ -204,7 +175,7 @@ export default function HomePage() {
                 transition={{ duration: ANIMATION_DURATION }}
                 className="text-2xl text-gray-600 font-light text-center"
               >
-                Hi. Let's play!
+                Hi. Let&apos;s play!
               </motion.p>
             </div>
           ) : (
@@ -289,9 +260,7 @@ export default function HomePage() {
         title={sidePanelContent.title}
         content={sidePanelContent.content}
         onContentSelect={(item) => {
-          console.log('onContentSelect called in page.tsx with:', item);
           setSelectedContent(item);
-          console.log('setSelectedContent called');
         }}
       />
     </div>
