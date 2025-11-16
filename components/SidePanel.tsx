@@ -87,7 +87,13 @@ export default function SidePanel({ isOpen, onClose, title, content, onContentSe
       }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+            <div 
+              className="flex items-center justify-between p-4 bg-white"
+              style={{
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+              }}
+            >
               <h2 className="text-xl font-semibold text-gray-800 capitalize">
                 {isChat ? 'Speak with Flower' : title}
               </h2>

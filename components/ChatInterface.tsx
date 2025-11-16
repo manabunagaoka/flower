@@ -294,6 +294,18 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
       return;
     }
     
+    // Request microphone permission explicitly for iOS
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('Microphone permission granted');
+      } catch (err) {
+        console.error('Microphone permission denied:', err);
+        alert('Please allow microphone access to use voice chat');
+        return;
+      }
+    }
+    
     console.log('Starting voice conversation');
     conversationActive.current = true;
     
@@ -411,8 +423,9 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
         {chatMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-center">
             <div>
-              <MessageCircle size={48} className="mx-auto mb-4 text-gray-300" />
-              <p className="text-sm text-gray-400">Start chatting</p>
+              <MessageCircle size={48} className="mx-auto mb-4 text-green-500" />
+              <p className="text-base text-gray-700 font-medium">Ready to chat!</p>
+              <p className="text-sm text-gray-500 mt-2">Type a message or tap the mic to speak</p>
             </div>
           </div>
         ) : (

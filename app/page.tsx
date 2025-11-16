@@ -225,7 +225,14 @@ export default function HomePage() {
         </div>
         
         {/* Wheel Container - Lower Bottom */}
-        <div className="bg-gray-100 flex items-center justify-center p-4" style={{ minHeight: '50vh' }}>
+        <div 
+          className="bg-white flex items-center justify-center p-4" 
+          style={{ 
+            minHeight: '50vh',
+            boxShadow: '0 -4px 16px -4px rgba(0, 0, 0, 0.1)',
+            borderTop: '1px solid rgba(0, 0, 0, 0.05)'
+          }}
+        >
           <div className="relative w-[80vw] h-[80vw] max-w-[400px] max-h-[400px] flex items-center justify-center">
             {/* Menu Wheel */}
             <AnimatePresence mode="wait">
