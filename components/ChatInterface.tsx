@@ -116,6 +116,16 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
         setIsListening(false);
       };
     }
+
+    // Cleanup: Revoke blob URLs when component unmounts
+    return () => {
+      if (audioRef.current?.src && audioRef.current.src.startsWith('blob:')) {
+        URL.revokeObjectURL(audioRef.current.src);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
   }, []);
 
   const handleTextSubmit = async () => {
@@ -207,65 +217,66 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
       console.log('TTS response status:', response.status);
       
       if (response.ok) {
-        const data = await response.json();
-        console.log('TTS response data:', data);
+        // Get audio as blob to avoid memory leaks from data URLs
+        const audioBlob = await response.blob();
+        console.log('TTS audio blob size:', audioBlob.size);
         
-        if (data.audioUrl) {
-          // Reuse existing audio element if available (iOS requirement)
-          let audio = audioRef.current;
-          if (!audio) {
-            audio = new Audio();
-            audioRef.current = audio;
-            
-            audio.onended = () => {
-              console.log('Audio playback ended');
-              setIsSpeaking(false);
-              if (conversationActive.current) {
-                console.log('Starting listening after TTS finished');
-                startListening();
-              }
-            };
-            
-            audio.onerror = (e) => {
-              console.error('Audio playback error:', e);
-              setIsSpeaking(false);
-              if (conversationActive.current) {
-                startListening();
-              }
-            };
-          }
+        // Reuse existing audio element if available (iOS requirement)
+        let audio = audioRef.current;
+        if (!audio) {
+          audio = new Audio();
+          audioRef.current = audio;
           
-          // Set source and load
-          audio.src = data.audioUrl;
-          await audio.load();
-          
-          // Ensure audio context is resumed before playing (iOS requirement)
-          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-            await audioContextRef.current.resume();
-          }
-          
-          try {
-            console.log('Attempting to play audio...');
-            await audio.play();
-            console.log('Audio started playing');
-          } catch (playError) {
-            console.warn('Audio playback failed:', playError);
+          audio.onended = () => {
+            console.log('Audio playback ended');
             setIsSpeaking(false);
-            
-            // Continue conversation even if audio fails
             if (conversationActive.current) {
-              console.log('Skipping TTS, starting listening immediately');
-              setTimeout(() => {
-                if (conversationActive.current) {
-                  startListening();
-                }
-              }, 100);
+              console.log('Starting listening after TTS finished');
+              startListening();
             }
-          }
-        } else {
-          console.error('No audioUrl in TTS response');
+          };
+          
+          audio.onerror = (e) => {
+            console.error('Audio playback error:', e);
+            setIsSpeaking(false);
+            if (conversationActive.current) {
+              startListening();
+            }
+          };
+        }
+        
+        // Revoke old blob URL if exists to prevent memory leak
+        if (audio.src && audio.src.startsWith('blob:')) {
+          URL.revokeObjectURL(audio.src);
+        }
+        
+        // Create blob URL (automatically garbage collected)
+        const blobUrl = URL.createObjectURL(audioBlob);
+        audio.src = blobUrl;
+        await audio.load();
+        
+        // Ensure audio context is resumed before playing (iOS requirement)
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume();
+        }
+        
+        try {
+          console.log('Attempting to play audio...');
+          await audio.play();
+          console.log('Audio started playing');
+        } catch (playError) {
+          console.warn('Audio playback failed:', playError);
           setIsSpeaking(false);
-          conversationActive.current = false;
+          
+          // Continue conversation even if audio fails
+          if (conversationActive.current) {
+            console.log('Skipping TTS, starting listening immediately');
+            setTimeout(() => {
+              if (conversationActive.current) {
+                startListening();
+              }
+            }, 100);
+          }
         }
       } else {
         console.error('TTS API error:', response.status);

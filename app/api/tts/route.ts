@@ -17,10 +17,13 @@ export async function POST(request: Request) {
     });
     
     const buffer = Buffer.from(await mp3.arrayBuffer());
-    const audioBase64 = buffer.toString('base64');
     
-    return NextResponse.json({ 
-      audioUrl: `data:audio/mp3;base64,${audioBase64}` 
+    // Return as binary response instead of data URL to avoid memory leaks
+    return new NextResponse(buffer, {
+      headers: {
+        'Content-Type': 'audio/mpeg',
+        'Content-Length': buffer.length.toString(),
+      },
     });
   } catch (error) {
     return NextResponse.json({ error: 'TTS failed' }, { status: 500 });
