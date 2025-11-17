@@ -17,6 +17,7 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [mediaError, setMediaError] = useState<string>('');
   
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -26,6 +27,9 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
   const lastInteractionRef = useRef<number>(Date.now());
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Detect if we're on mobile
   const isMobile = () => {
@@ -104,50 +108,12 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     document.addEventListener('click', trackInteraction);
 
     // Debug: Check API availability
-    console.log('=== Voice API Check ===');
-    console.log('webkitSpeechRecognition available:', 'webkitSpeechRecognition' in window);
+    console.log('=== Media API Check ===');
+    console.log('MediaRecorder available:', 'MediaRecorder' in window);
+    console.log('getUserMedia available:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
     console.log('AudioContext available:', 'AudioContext' in window || 'webkitAudioContext' in window);
     console.log('User agent:', navigator.userAgent);
     console.log('Is standalone:', window.matchMedia('(display-mode: standalone)').matches);
-    
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
-      
-      recognitionRef.current.onresult = async (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setIsListening(false);
-        console.log('Voice input received:', transcript);
-        await sendToOpenAI(transcript, true);
-      };
-
-      recognitionRef.current.onerror = (event: any) => {
-        console.log('Speech recognition error:', event.error);
-        setIsListening(false);
-        
-        if (event.error === 'no-speech') {
-          console.log('No speech detected, retrying...');
-          if (conversationActive.current) {
-            setTimeout(() => startListening(), 1000);
-          }
-        } else if (event.error === 'audio-capture' || event.error === 'not-allowed') {
-          console.error('Microphone access issue:', event.error);
-          conversationActive.current = false;
-          setIsListening(false);
-          setIsSpeaking(false);
-        } else {
-          console.log('Other speech error, stopping conversation');
-          conversationActive.current = false;
-        }
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
 
     // Cleanup: Revoke blob URLs when component unmounts
     return () => {
@@ -323,9 +289,11 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
         try {
           await audio.play();
           console.log('Audio started playing successfully');
+          setMediaError(''); // Clear any previous errors
         } catch (playError) {
           console.error('Audio playback failed:', playError);
           setIsSpeaking(false);
+          setMediaError('Audio playback failed. Try closing and reopening the app.');
           
           // Revoke blob URL on play failure
           URL.revokeObjectURL(blobUrl);
@@ -354,19 +322,107 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     }
   };
 
-  const startListening = () => {
-    if (!recognitionRef.current || isListening || isSpeaking) {
-      console.log('Cannot start listening:', { hasRecognition: !!recognitionRef.current, isListening, isSpeaking });
+  const startListening = async () => {
+    if (isListening || isSpeaking) {
+      console.log('Cannot start listening:', { isListening, isSpeaking });
       return;
     }
     
     try {
-      console.log('Starting speech recognition...');
+      console.log('Starting voice recording with MediaRecorder (iOS compatible)');
       setIsListening(true);
-      recognitionRef.current.start();
+      audioChunksRef.current = [];
+      
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = async () => {
+        console.log('Recording stopped, processing audio...');
+        setIsListening(false);
+        
+        // Stop all tracks
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+        
+        // Create audio blob
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        console.log('Audio blob size:', audioBlob.size);
+        
+        if (audioBlob.size > 0) {
+          // Send to Whisper API
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'recording.webm');
+          
+          try {
+            const response = await fetch('/api/whisper', {
+              method: 'POST',
+              body: formData,
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              console.log('Transcription:', data.text);
+              
+              if (data.text) {
+                await sendToOpenAI(data.text, true);
+              } else {
+                console.log('No speech detected, retrying...');
+                if (conversationActive.current) {
+                  setTimeout(() => startListening(), 500);
+                }
+              }
+            } else {
+              console.error('Whisper API error:', response.status);
+              setMediaError('Voice recognition failed. Please try again.');
+              if (conversationActive.current) {
+                setTimeout(() => startListening(), 1000);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to transcribe:', error);
+            setMediaError('Voice recognition failed. Please try again.');
+            if (conversationActive.current) {
+              setTimeout(() => startListening(), 1000);
+            }
+          }
+        } else {
+          console.log('Empty recording, retrying...');
+          if (conversationActive.current) {
+            setTimeout(() => startListening(), 500);
+          }
+        }
+      };
+      
+      // Start recording (5 second max)
+      mediaRecorder.start();
+      console.log('Recording started...');
+      
+      // Auto-stop after 5 seconds
+      setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          console.log('Auto-stopping recording after 5 seconds');
+          mediaRecorderRef.current.stop();
+        }
+      }, 5000);
+      
     } catch (error) {
-      console.log('Recognition error:', error);
+      console.error('Failed to start recording:', error);
       setIsListening(false);
+      setMediaError('Microphone access denied. Please check permissions.');
+      conversationActive.current = false;
     }
   };
 
@@ -378,6 +434,9 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
       stopConversation();
       return;
     }
+    
+    // Clear any previous errors
+    setMediaError('');
     
     console.log('Starting voice conversation');
     conversationActive.current = true;
@@ -451,6 +510,22 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     setIsListening(false);
     setIsSpeaking(false);
     
+    // Stop MediaRecorder if active
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (e) {
+        console.error('Error stopping MediaRecorder:', e);
+      }
+    }
+    
+    // Stop media stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    
+    // Legacy: stop old speech recognition if exists
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -535,6 +610,18 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
             ))}
             {isProcessing && (
               <div className="text-sm text-gray-500 italic">Flower is typing...</div>
+            )}
+            {mediaError && (
+              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+                <div className="font-medium mb-1">⚠️ Media Error</div>
+                <div>{mediaError}</div>
+                <button 
+                  onClick={() => setMediaError('')}
+                  className="mt-2 text-xs underline"
+                >
+                  Dismiss
+                </button>
+              </div>
             )}
             {/* Extra spacing at bottom */}
             <div className="h-4"></div>
