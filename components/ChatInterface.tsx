@@ -109,11 +109,54 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
 
     // Debug: Check API availability
     console.log('=== Media API Check ===');
+    console.log('webkitSpeechRecognition available:', 'webkitSpeechRecognition' in window);
     console.log('MediaRecorder available:', 'MediaRecorder' in window);
     console.log('getUserMedia available:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
     console.log('AudioContext available:', 'AudioContext' in window || 'webkitAudioContext' in window);
     console.log('User agent:', navigator.userAgent);
     console.log('Is standalone:', window.matchMedia('(display-mode: standalone)').matches);
+    
+    // Setup Web Speech API (preferred for iOS)
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      console.log('Setting up Web Speech API');
+      const SpeechRecognition = (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+      
+      recognitionRef.current.onresult = async (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setIsListening(false);
+        console.log('Voice input received:', transcript);
+        await sendToOpenAI(transcript, true);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.log('Speech recognition error:', event.error);
+        setIsListening(false);
+        
+        if (event.error === 'no-speech') {
+          console.log('No speech detected, retrying...');
+          if (conversationActive.current) {
+            setTimeout(() => startListening(), 1000);
+          }
+        } else if (event.error === 'audio-capture' || event.error === 'not-allowed') {
+          console.error('Microphone access issue:', event.error);
+          conversationActive.current = false;
+        } else {
+          console.log('Other speech error:', event.error);
+          if (conversationActive.current) {
+            setTimeout(() => startListening(), 1000);
+          }
+        }
+      };
+
+      recognitionRef.current.onend = () => {
+        console.log('Recognition ended');
+        setIsListening(false);
+      };
+    }
 
     // Cleanup: Revoke blob URLs when component unmounts
     return () => {
@@ -328,8 +371,21 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
       return;
     }
     
+    // Try Web Speech API first (works better on iOS when available)
+    if (recognitionRef.current) {
+      try {
+        console.log('Starting Web Speech recognition...');
+        setIsListening(true);
+        recognitionRef.current.start();
+        return;
+      } catch (error) {
+        console.log('Web Speech API failed, trying MediaRecorder:', error);
+      }
+    }
+    
+    // Fallback to MediaRecorder + Whisper
     try {
-      console.log('Starting voice recording with MediaRecorder (iOS compatible)');
+      console.log('Starting voice recording with MediaRecorder');
       setIsListening(true);
       audioChunksRef.current = [];
       
@@ -396,12 +452,10 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
           } catch (error) {
             console.error('Failed to transcribe:', error);
             setMediaError('Voice recognition failed. Please try again.');
-            if (conversationActive.current) {
-              setTimeout(() => startListening(), 1000);
-            }
+            conversationActive.current = false;
           }
         } else {
-          console.log('Empty recording, retrying...');
+          console.log('Audio too small, retrying...');
           if (conversationActive.current) {
             setTimeout(() => startListening(), 500);
           }
