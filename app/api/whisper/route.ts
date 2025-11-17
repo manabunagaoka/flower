@@ -30,24 +30,20 @@ export async function POST(request: NextRequest) {
       file: audioFile,
       model: 'whisper-1',
       language: 'en',
-      response_format: 'text', // Get plain text response
     });
 
-    console.log('Transcription result:', transcription);
+    console.log('Transcription result:', transcription.text);
     
-    // response_format: 'text' returns string directly
-    const text = typeof transcription === 'string' ? transcription : transcription.text;
-    
-    return NextResponse.json({ text });
-  } catch (error: any) {
+    return NextResponse.json({ text: transcription.text });
+  } catch (error) {
     console.error('Whisper API error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error details:', {
-      message: error?.message,
-      status: error?.status,
-      type: error?.type
+      message: errorMessage,
+      error
     });
     return NextResponse.json(
-      { error: 'Failed to transcribe audio', details: error?.message },
+      { error: 'Failed to transcribe audio', details: errorMessage },
       { status: 500 }
     );
   }
