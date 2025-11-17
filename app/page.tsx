@@ -19,9 +19,23 @@ export default function HomePage() {
   }>({ title: '', content: [] });
   const [wheelAngle, setWheelAngle] = useState<number>(0);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
+  const [videoKey, setVideoKey] = useState<number>(0); // Force iframe reload when needed
 
   const isMenuOpen = menuState !== 'closed';
   const currentMenuItems = menuState === 'more' ? MORE_MENU_ITEMS : MAIN_MENU_ITEMS;
+
+  // Handle visibility changes to reset media permissions on iOS
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && selectedContent?.videoId) {
+        console.log('App became visible - reloading video iframe for iOS');
+        setVideoKey(prev => prev + 1);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [selectedContent]);
 
   // Find closest menu item based on wheel angle
   const findClosestMenuItem = (angle: number) => {
@@ -200,6 +214,7 @@ export default function HomePage() {
                   <div className="flex-1 flex items-center justify-center bg-white overflow-hidden">
                     <div className="relative w-full" style={{ paddingTop: '56.25%', maxHeight: '100%' }}>
                       <iframe
+                        key={`video-${selectedContent.videoId}-${videoKey}`}
                         src={`https://fast.wistia.net/embed/iframe/${selectedContent.videoId}?playsinline=1&controlsVisibleOnLoad=true&playerColor=54bb6a&plugin%5BpostRoll-v1%5D%5Btext%5D=&volume=1`}
                         title={selectedContent.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"

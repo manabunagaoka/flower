@@ -25,6 +25,7 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
   const conversationActive = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
+  const lastInteractionRef = useRef<number>(Date.now());
 
   // Detect if we're on mobile
   const isMobile = () => {
@@ -52,10 +53,16 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     }
   }, []);
 
-  // Setup speech recognition
+  // Setup speech recognition and handle iOS media permission resets
   useEffect(() => {
+    // Track user interactions to detect when iOS might have reset permissions
+    const trackInteraction = () => {
+      lastInteractionRef.current = Date.now();
+    };
+    
     // Initialize Audio Context on first user interaction for mobile
     const unlockAudio = () => {
+      trackInteraction();
       if (!audioUnlockedRef.current && typeof window !== 'undefined') {
         try {
           audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -68,8 +75,33 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
       }
     };
 
+    // Re-initialize on visibility change (iOS resets media when app backgrounds)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('App became visible - checking media permissions');
+        const timeSinceLastInteraction = Date.now() - lastInteractionRef.current;
+        
+        // If it's been more than 30 seconds, iOS likely reset permissions
+        if (timeSinceLastInteraction > 30000) {
+          console.log('Long time since last interaction, media may need re-initialization');
+          audioUnlockedRef.current = false;
+          
+          // Force recreation on next interaction
+          if (audioContextRef.current) {
+            audioContextRef.current.close().catch(() => {});
+            audioContextRef.current = null;
+          }
+        }
+      }
+    };
+
     document.addEventListener('touchstart', unlockAudio, { once: true });
     document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Also track interactions globally
+    document.addEventListener('touchstart', trackInteraction);
+    document.addEventListener('click', trackInteraction);
 
     // Debug: Check API availability
     console.log('=== Voice API Check ===');
@@ -119,6 +151,10 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
 
     // Cleanup: Revoke blob URLs when component unmounts
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('touchstart', trackInteraction);
+      document.removeEventListener('click', trackInteraction);
+      
       if (audioRef.current?.src && audioRef.current.src.startsWith('blob:')) {
         URL.revokeObjectURL(audioRef.current.src);
       }
@@ -221,15 +257,23 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
         const audioBlob = await response.blob();
         console.log('TTS audio blob size:', audioBlob.size);
         
+        // Create blob URL first
+        const blobUrl = URL.createObjectURL(audioBlob);
+        
         // Reuse existing audio element if available (iOS requirement)
         let audio = audioRef.current;
         if (!audio) {
+          console.log('Creating new Audio element');
           audio = new Audio();
           audioRef.current = audio;
           
           audio.onended = () => {
             console.log('Audio playback ended');
             setIsSpeaking(false);
+            // Revoke blob URL after playback finishes
+            if (audio && audio.src && audio.src.startsWith('blob:')) {
+              URL.revokeObjectURL(audio.src);
+            }
             if (conversationActive.current) {
               console.log('Starting listening after TTS finished');
               startListening();
@@ -239,34 +283,52 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
           audio.onerror = (e) => {
             console.error('Audio playback error:', e);
             setIsSpeaking(false);
+            // Revoke blob URL on error
+            if (audio && audio.src && audio.src.startsWith('blob:')) {
+              URL.revokeObjectURL(audio.src);
+            }
             if (conversationActive.current) {
               startListening();
             }
           };
+        } else {
+          // Revoke previous blob URL before setting new one
+          if (audio.src && audio.src.startsWith('blob:')) {
+            console.log('Revoking previous blob URL');
+            URL.revokeObjectURL(audio.src);
+          }
         }
         
-        // Revoke old blob URL if exists to prevent memory leak
-        if (audio.src && audio.src.startsWith('blob:')) {
-          URL.revokeObjectURL(audio.src);
-        }
-        
-        // Create blob URL (automatically garbage collected)
-        const blobUrl = URL.createObjectURL(audioBlob);
+        // Set new source
         audio.src = blobUrl;
-        await audio.load();
+        console.log('Set audio src to blob URL');
         
-        // Ensure audio context is resumed before playing (iOS requirement)
-        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        // Ensure audio context is created and resumed before playing (iOS requirement)
+        if (!audioContextRef.current) {
+          console.log('Creating AudioContext');
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        
+        if (audioContextRef.current.state === 'suspended') {
+          console.log('Resuming suspended AudioContext');
           await audioContextRef.current.resume();
         }
         
+        console.log('AudioContext state:', audioContextRef.current.state);
+        
+        // Load and play
+        await audio.load();
+        console.log('Audio loaded, attempting to play...');
+        
         try {
-          console.log('Attempting to play audio...');
           await audio.play();
-          console.log('Audio started playing');
+          console.log('Audio started playing successfully');
         } catch (playError) {
-          console.warn('Audio playback failed:', playError);
+          console.error('Audio playback failed:', playError);
           setIsSpeaking(false);
+          
+          // Revoke blob URL on play failure
+          URL.revokeObjectURL(blobUrl);
           
           // Continue conversation even if audio fails
           if (conversationActive.current) {
@@ -320,26 +382,48 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     console.log('Starting voice conversation');
     conversationActive.current = true;
     
-    // Pre-create audio element on user interaction (iOS requirement)
-    if (!audioRef.current) {
-      console.log('Initializing audio element for iOS');
-      audioRef.current = new Audio();
-      audioRef.current.onended = () => {
-        console.log('Audio playback ended');
-        setIsSpeaking(false);
-        if (conversationActive.current) {
-          console.log('Starting listening after TTS finished');
-          startListening();
-        }
-      };
-      audioRef.current.onerror = (e) => {
-        console.error('Audio playback error:', e);
-        setIsSpeaking(false);
-        if (conversationActive.current) {
-          startListening();
-        }
-      };
+    // CRITICAL: Recreate AudioContext on every interaction (iOS resets it)
+    try {
+      console.log('Recreating AudioContext for iOS compatibility');
+      if (audioContextRef.current) {
+        await audioContextRef.current.close();
+      }
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      await audioContextRef.current.resume();
+      console.log('Fresh AudioContext created, state:', audioContextRef.current.state);
+    } catch (error) {
+      console.warn('AudioContext creation failed:', error);
     }
+    
+    // CRITICAL: Recreate Audio element on every interaction (iOS requirement)
+    console.log('Recreating Audio element for iOS');
+    
+    // Clean up old audio element
+    if (audioRef.current) {
+      if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
+        URL.revokeObjectURL(audioRef.current.src);
+      }
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
+    
+    // Create fresh audio element
+    audioRef.current = new Audio();
+    audioRef.current.onended = () => {
+      console.log('Audio playback ended');
+      setIsSpeaking(false);
+      if (conversationActive.current) {
+        console.log('Starting listening after TTS finished');
+        startListening();
+      }
+    };
+    audioRef.current.onerror = (e) => {
+      console.error('Audio playback error:', e);
+      setIsSpeaking(false);
+      if (conversationActive.current) {
+        startListening();
+      }
+    };
     
     const greeting = "Hi! How are you doing?";
     
