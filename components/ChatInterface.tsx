@@ -6,10 +6,11 @@ import { MessageCircle, Mic, AudioLines, Send, Square } from 'lucide-react';
 
 const VOICE_CHOICE = 'sage';
 const VOICE_SPEED = 1.05;
-const VOICE_SERVICE_URL = process.env.NEXT_PUBLIC_VOICE_SERVICE_URL || '';
+// Hardcoded for now - move to env var later
+const VOICE_SERVICE_URL = 'https://voice-chat-service-i5u9.onrender.com';
 
 // Use fast voice service if URL is configured
-const USE_FAST_VOICE = !!VOICE_SERVICE_URL;
+const USE_FAST_VOICE = true;
 
 interface ChatInterfaceProps {
   inPanel?: boolean;
