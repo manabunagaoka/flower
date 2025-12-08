@@ -397,14 +397,19 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     formData.append('conversation_history', JSON.stringify(history));
     
     console.log('Sending to fast voice service:', VOICE_SERVICE_URL);
+    console.log('Audio blob size:', audioBlob.size, 'type:', audioBlob.type);
     
     const response = await fetch(`${VOICE_SERVICE_URL}/voice-chat`, {
       method: 'POST',
       body: formData,
     });
     
+    console.log('Response status:', response.status, response.statusText);
+    
     if (!response.ok) {
-      throw new Error(`Voice service error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Voice service error response:', errorText);
+      throw new Error(`Voice service error: ${response.status} - ${errorText}`);
     }
     
     // Process streaming response
@@ -753,39 +758,26 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
         {/* Bottom Button Row - Centered */}
         <div className="flex items-center justify-center gap-6">
           {USE_FAST_VOICE ? (
-            /* Fast Voice Service - Hold to Record */
+            /* Fast Voice Service - Tap to Start/Stop */
             <button 
-              onMouseDown={(e) => {
+              onClick={(e) => {
                 e.preventDefault();
-                console.log('Starting fast recording (mouse)');
-                startFastRecording();
-              }}
-              onMouseUp={(e) => {
-                e.preventDefault();
-                console.log('Stopping fast recording (mouse)');
-                stopFastRecording();
-              }}
-              onMouseLeave={() => {
+                e.stopPropagation();
                 if (isListening) {
-                  console.log('Mouse left, stopping recording');
+                  console.log('Stopping fast recording (tap)');
                   stopFastRecording();
+                } else if (!isProcessing && !isSpeaking) {
+                  console.log('Starting fast recording (tap)');
+                  startFastRecording();
                 }
               }}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                console.log('Starting fast recording (touch)');
-                startFastRecording();
-              }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                console.log('Stopping fast recording (touch)');
-                stopFastRecording();
-              }}
-              disabled={isProcessing || isSpeaking}
+              disabled={isProcessing}
               className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors disabled:opacity-50 disabled:bg-gray-100 min-w-[80px] ${
                 isListening 
                   ? 'bg-red-500 scale-110' 
-                  : 'bg-red-50 hover:bg-red-100 active:bg-red-200'
+                  : isSpeaking
+                    ? 'bg-blue-50'
+                    : 'bg-red-50 hover:bg-red-100 active:bg-red-200'
               }`}
               type="button"
             >
@@ -797,7 +789,7 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
                 <Mic size={32} className="text-red-500" />
               )}
               <span className={`text-xs font-medium ${isListening ? 'text-white' : 'text-gray-600'}`}>
-                {isListening ? 'Release' : isSpeaking ? 'Speaking' : 'Hold'}
+                {isListening ? 'Tap to Stop' : isSpeaking ? 'Speaking...' : 'Speak'}
               </span>
             </button>
           ) : (
