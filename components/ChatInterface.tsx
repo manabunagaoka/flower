@@ -43,6 +43,56 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     );
   };
 
+  // Initial greeting when chat opens
+  const hasGreetedRef = useRef(false);
+  useEffect(() => {
+    if (!hasGreetedRef.current && USE_FAST_VOICE) {
+      hasGreetedRef.current = true;
+      const greeting = "Hi! How are you doing? Tap the Speak button and tell me what's on your mind.";
+      setChatMessages([{ text: greeting, sender: 'ai', timestamp: Date.now() }]);
+      
+      // Speak the greeting
+      speakGreeting(greeting);
+    }
+  }, []);
+
+  const speakGreeting = async (text: string) => {
+    try {
+      setIsSpeaking(true);
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice: VOICE_CHOICE, speed: VOICE_SPEED })
+      });
+      
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        const audio = new Audio();
+        audioRef.current = audio;
+        
+        const blobUrl = URL.createObjectURL(audioBlob);
+        audio.src = blobUrl;
+        
+        audio.onended = () => {
+          URL.revokeObjectURL(blobUrl);
+          setIsSpeaking(false);
+        };
+        
+        audio.onerror = () => {
+          URL.revokeObjectURL(blobUrl);
+          setIsSpeaking(false);
+        };
+        
+        await audio.play().catch(() => setIsSpeaking(false));
+      } else {
+        setIsSpeaking(false);
+      }
+    } catch (err) {
+      console.error('Greeting TTS error:', err);
+      setIsSpeaking(false);
+    }
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -307,11 +357,6 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     try {
       console.log('Starting fast voice recording...');
       
-      // Show greeting on first tap
-      if (chatMessages.length === 0) {
-        setChatMessages([{ text: "Hi! Tap the mic, speak, then tap again to send.", sender: 'ai', timestamp: Date.now() }]);
-      }
-      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -429,52 +474,57 @@ export default function ChatInterface({ inPanel = false }: ChatInterfaceProps) {
     let transcription = '';
     let aiResponse = '';
     const audioChunks: Uint8Array[] = [];
-    let buffer = new Uint8Array(0);
+    let textBuffer = '';
     
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       
-      // Append to buffer
-      const newBuffer = new Uint8Array(buffer.length + value.length);
-      newBuffer.set(buffer);
-      newBuffer.set(value, buffer.length);
-      buffer = newBuffer;
-      
-      // Try to find JSON lines at start of buffer
-      const text = new TextDecoder().decode(buffer);
-      const newlineIndex = text.indexOf('\n');
-      
-      if (newlineIndex > -1) {
-        const line = text.substring(0, newlineIndex);
-        try {
-          const json = JSON.parse(line);
-          if (json.type === 'transcription') {
-            transcription = json.text;
-            // Add user message immediately
-            setChatMessages(prev => [...prev, { text: transcription, sender: 'user', timestamp: Date.now() }]);
-          } else if (json.type === 'response') {
-            aiResponse = json.text;
+      // Try to decode as text to find JSON metadata
+      try {
+        const text = new TextDecoder().decode(value);
+        
+        // Check if this chunk contains JSON (starts with { or has newline with {)
+        if (text.includes('{"type"')) {
+          // This chunk has JSON, parse it
+          const lines = (textBuffer + text).split('\n');
+          textBuffer = '';
+          
+          for (const line of lines) {
+            if (line.trim().startsWith('{')) {
+              try {
+                const json = JSON.parse(line.trim());
+                if (json.type === 'transcription') {
+                  transcription = json.text;
+                  console.log('Got transcription:', transcription);
+                  setChatMessages(prev => [...prev, { text: transcription, sender: 'user', timestamp: Date.now() }]);
+                } else if (json.type === 'response') {
+                  aiResponse = json.text;
+                  console.log('Got AI response:', aiResponse);
+                } else if (json.type === 'error') {
+                  console.error('Service error:', json.message);
+                  setChatMessages(prev => [...prev, { text: json.message, sender: 'ai', timestamp: Date.now() }]);
+                }
+              } catch {
+                // Not valid JSON, might be partial
+                textBuffer += line + '\n';
+              }
+            } else if (line.trim()) {
+              // Non-JSON text, keep in buffer
+              textBuffer += line + '\n';
+            }
           }
-          // Remove parsed JSON from buffer
-          buffer = buffer.slice(new TextEncoder().encode(line + '\n').length);
-        } catch {
-          // Not valid JSON, treat rest as audio
-          audioChunks.push(buffer);
-          buffer = new Uint8Array(0);
+        } else {
+          // Likely audio data
+          audioChunks.push(value);
         }
-      } else {
-        // No newline, might be audio data
+      } catch {
+        // Binary data, treat as audio
         audioChunks.push(value);
       }
     }
     
-    // Add any remaining buffer to audio
-    if (buffer.length > 0) {
-      audioChunks.push(buffer);
-    }
-    
-    // Add AI response to chat
+    // Add AI response to chat BEFORE playing audio
     if (aiResponse) {
       setChatMessages(prev => [...prev, { text: aiResponse, sender: 'ai', timestamp: Date.now() }]);
     }
