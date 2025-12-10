@@ -628,18 +628,33 @@ export default function ChatInterface({
       mediaRecorder.start(100);
       setIsListening(true);
       conversationActive.current = true;
+      console.log('Recording started, isListening=true, conversationActive=true');
       
       // Start VAD monitoring
       requestAnimationFrame(checkAudioLevel);
       
     } catch (err) {
       console.error('Failed to start recording:', err);
+      // Reset ALL state on error
+      isListeningRef.current = false;
+      setIsListening(false);
+      setIsProcessing(false);
+      setIsTranscribing(false);
+      conversationActive.current = false;
       setChatMessages(prev => [...prev, { id: generateMessageId(), text: `Mic error: ${err}`, sender: 'ai', timestamp: Date.now() }]);
     }
   };
 
   const stopFastRecording = async () => {
-    if (!mediaRecorderRef.current || !isListeningRef.current) return;
+    console.log('stopFastRecording called', { 
+      hasMediaRecorder: !!mediaRecorderRef.current, 
+      isListeningRef: isListeningRef.current 
+    });
+    
+    if (!mediaRecorderRef.current || !isListeningRef.current) {
+      console.log('stopFastRecording - early return (no recorder or not listening)');
+      return;
+    }
     
     console.log('Stopping fast voice recording...');
     
