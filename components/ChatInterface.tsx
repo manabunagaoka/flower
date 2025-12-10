@@ -880,6 +880,7 @@ export default function ChatInterface({
 
   const playFastAudio = async (chunks: Uint8Array[]): Promise<void> => {
     return new Promise((resolve) => {
+      console.log('=== playFastAudio called ===');
       setIsSpeaking(true);
       
       // Combine all chunks
@@ -891,23 +892,18 @@ export default function ChatInterface({
         offset += chunk.length;
       }
       
+      console.log('Audio data size:', combined.length, 'bytes');
       const audioBlob = new Blob([combined], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
       
-      let audio = audioRef.current;
-      if (!audio) {
-        audio = new Audio();
-        audioRef.current = audio;
-      }
-      
-      // Clean up old URL
-      if (audio.src && audio.src.startsWith('blob:')) {
-        URL.revokeObjectURL(audio.src);
-      }
+      // Always create a fresh Audio element for reliable playback
+      const audio = new Audio();
+      audioRef.current = audio;
       
       audio.src = audioUrl;
       
       audio.onended = () => {
+        console.log('Audio playback ended');
         URL.revokeObjectURL(audioUrl);
         setIsSpeaking(false);
         // Auto-continue conversation - start listening after Flower speaks
@@ -918,16 +914,32 @@ export default function ChatInterface({
         resolve();
       };
       
-      audio.onerror = () => {
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
         URL.revokeObjectURL(audioUrl);
         setIsSpeaking(false);
+        // Still continue conversation even if audio failed
+        if (conversationActive.current) {
+          console.log('Audio failed but continuing conversation');
+          setTimeout(() => startFastRecording(), 300);
+        }
         resolve();
       };
       
-      audio.play().catch(() => {
-        setIsSpeaking(false);
-        resolve();
-      });
+      audio.play()
+        .then(() => {
+          console.log('Audio playing successfully');
+        })
+        .catch((err) => {
+          console.error('Audio play() failed:', err);
+          setIsSpeaking(false);
+          // Still continue conversation even if audio failed
+          if (conversationActive.current) {
+            console.log('Play failed but continuing conversation');
+            setTimeout(() => startFastRecording(), 300);
+          }
+          resolve();
+        });
     });
   };
   // ===== END FAST VOICE SERVICE =====
