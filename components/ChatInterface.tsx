@@ -171,11 +171,19 @@ export default function ChatInterface({
     console.log('=== speakGreetingOnly called ===');
     try {
       setIsSpeaking(true);
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(`${VOICE_SERVICE_URL}/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ text }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeout);
       
       if (response.ok) {
         const audioBlob = await response.blob();
