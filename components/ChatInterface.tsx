@@ -346,19 +346,23 @@ export default function ChatInterface({
   const greetAndListen = async () => {
     const greeting = "Hi! How are you doing? What's on your mind?";
     const ts = Date.now();
+    
+    // Start TTS fetch immediately (don't wait)
+    setIsSpeaking(true);
+    const ttsPromise = fetch(`${VOICE_SERVICE_URL}/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: greeting })
+    }).catch(() => null);
+    
+    // Show message with typing animation
     setChatMessages([{ id: generateMessageId(), text: greeting, sender: 'ai', timestamp: ts }]);
     setAnimatingMessageId(ts);
     
-    // Always try TTS - user tapped mic so we have gesture context for audio
+    // Wait for TTS and play
     try {
-      setIsSpeaking(true);
-      const res = await fetch(`${VOICE_SERVICE_URL}/tts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: greeting })
-      });
-      
-      if (res.ok) {
+      const res = await ttsPromise;
+      if (res?.ok) {
         const url = URL.createObjectURL(await res.blob());
         const audio = new Audio(url);
         audioRef.current = audio;
@@ -370,14 +374,8 @@ export default function ChatInterface({
         };
         
         audio.onended = done;
-        audio.onerror = () => {
-          console.log('Audio play failed, continuing without TTS');
-          done();
-        };
-        await audio.play().catch((e) => {
-          console.log('Audio play rejected:', e.message);
-          done();
-        });
+        audio.onerror = () => { console.log('Audio error'); done(); };
+        await audio.play().catch((e) => { console.log('Play rejected:', e.message); done(); });
       } else {
         setIsSpeaking(false);
         if (conversationActive.current) startRecording();
@@ -534,11 +532,10 @@ export default function ChatInterface({
         )}
       </div>
 
-      {/* Input Area - Fixed to bottom with safe area padding */}
+      {/* Input Area - with generous bottom padding for mobile */}
       <div style={{ 
         flexShrink: 0, 
-        padding: '12px 16px', 
-        paddingBottom: 'max(16px, env(safe-area-inset-bottom))', 
+        padding: '12px 16px 32px 16px',
         borderTop: '1px solid #eee', 
         background: 'white'
       }}>

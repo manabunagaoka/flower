@@ -84,17 +84,19 @@ export default function SidePanel({
         position: 'fixed',
         right: '0',
         top: '0',
+        bottom: '0',
         zIndex: 100,
         backgroundColor: '#ffffff',
         borderLeft: '1px solid #e9ecef',
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
-        maxHeight: '100vh',
+        height: '100dvh',
+        maxHeight: '100dvh',
         overflowY: 'hidden',
         overscrollBehavior: 'none',
         width: '100%',
-        maxWidth: '28rem'
+        maxWidth: '28rem',
+        WebkitOverflowScrolling: 'touch'
       }}
           >
             {/* Header */}
