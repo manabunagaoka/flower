@@ -901,9 +901,8 @@ export default function ChatInterface({
   };
 
   const playFastAudio = async (chunks: Uint8Array[]): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       console.log('=== playFastAudio called ===');
-      setIsSpeaking(true);
       
       // Combine all chunks
       const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
@@ -915,6 +914,20 @@ export default function ChatInterface({
       }
       
       console.log('Audio data size:', combined.length, 'bytes');
+      
+      // On mobile, skip audio playback and just continue conversation
+      if (isMobile()) {
+        console.log('Mobile detected - skipping audio playback');
+        setIsSpeaking(false);
+        if (conversationActive.current) {
+          setTimeout(() => startFastRecording(), 500);
+        }
+        resolve();
+        return;
+      }
+      
+      // Desktop: play audio normally
+      setIsSpeaking(true);
       const audioBlob = new Blob([combined], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
       
@@ -1106,11 +1119,9 @@ export default function ChatInterface({
 
   return (
     <div 
-      className="relative flex flex-col h-full bg-transparent overflow-hidden"
+      className="flex flex-col h-full bg-transparent overflow-hidden"
       style={{
-        position: 'relative',
         height: '100%',
-        minHeight: '300px', // Reduced since we have header above
         maxHeight: '100%',
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'auto'
@@ -1136,9 +1147,9 @@ export default function ChatInterface({
 
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-2" 
+        className="flex-1 overflow-y-auto p-4 space-y-2 min-h-0" 
         style={{ 
-          paddingBottom: '200px',
+          paddingBottom: '20px',
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'thin'
@@ -1222,12 +1233,10 @@ export default function ChatInterface({
       </div>
       
       <div 
-        className="absolute bottom-0 left-0 right-0 bg-white"
+        className="flex-shrink-0 bg-white"
         style={{
-          position: 'absolute',
-          zIndex: 110,
           paddingTop: '12px',
-          paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
           paddingLeft: '16px',
           paddingRight: '16px',
           boxShadow: '0 -4px 12px -4px rgba(0, 0, 0, 0.08)',
