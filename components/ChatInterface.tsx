@@ -165,8 +165,13 @@ export default function ChatInterface({
       if (response.ok) {
         const audioBlob = await response.blob();
         console.log('Got greeting audio, size:', audioBlob.size);
-        const audio = new Audio();
-        audioRef.current = audio;
+        
+        // Use the pre-unlocked audio element if available
+        let audio = audioRef.current;
+        if (!audio) {
+          audio = new Audio();
+          audioRef.current = audio;
+        }
         
         const blobUrl = URL.createObjectURL(audioBlob);
         audio.src = blobUrl;
@@ -1313,6 +1318,19 @@ export default function ChatInterface({
                   // Start conversation
                   console.log('Mic button pressed');
                   conversationActive.current = true;
+                  
+                  // IMPORTANT: Unlock audio immediately on user tap (mobile Safari requirement)
+                  // This must happen synchronously within the click event
+                  const unlockAudio = new Audio();
+                  unlockAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+                  unlockAudio.play().then(() => {
+                    console.log('Audio unlocked for mobile');
+                    unlockAudio.pause();
+                  }).catch(() => {
+                    console.log('Audio unlock attempt (may have failed)');
+                  });
+                  // Store for reuse
+                  audioRef.current = unlockAudio;
                   
                   // First time? Greet then listen. Otherwise just listen.
                   if (!hasGreetedRef.current) {
