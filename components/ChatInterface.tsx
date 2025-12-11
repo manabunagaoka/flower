@@ -310,10 +310,11 @@ export default function ChatInterface({
       const audioData = combined.slice(bytesProcessed);
       console.log('Audio:', audioData.length, 'bytes');
       
-      if (audioData.length > 100 && !isMobile()) {
+      // Always try to play audio - user gesture context should allow it
+      if (audioData.length > 100) {
         await playAudio(audioData);
       } else {
-        // Mobile: skip audio, continue
+        // No audio data, continue to listening
         if (conversationActive.current) setTimeout(() => startRecording(), 500);
       }
     } finally {
@@ -348,11 +349,7 @@ export default function ChatInterface({
     setChatMessages([{ id: generateMessageId(), text: greeting, sender: 'ai', timestamp: ts }]);
     setAnimatingMessageId(ts);
     
-    if (isMobile()) {
-      setTimeout(() => startRecording(), 500);
-      return;
-    }
-    
+    // Always try TTS - user tapped mic so we have gesture context for audio
     try {
       setIsSpeaking(true);
       const res = await fetch(`${VOICE_SERVICE_URL}/tts`, {
@@ -373,8 +370,14 @@ export default function ChatInterface({
         };
         
         audio.onended = done;
-        audio.onerror = done;
-        await audio.play().catch(done);
+        audio.onerror = () => {
+          console.log('Audio play failed, continuing without TTS');
+          done();
+        };
+        await audio.play().catch((e) => {
+          console.log('Audio play rejected:', e.message);
+          done();
+        });
       } else {
         setIsSpeaking(false);
         if (conversationActive.current) startRecording();
@@ -460,7 +463,12 @@ export default function ChatInterface({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: 'white' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100%', 
+      backgroundColor: 'white'
+    }}>
       {/* Header */}
       {chatMessages.length > 0 && (
         <div style={{ flexShrink: 0, padding: '8px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'flex-end' }}>
@@ -526,8 +534,14 @@ export default function ChatInterface({
         )}
       </div>
 
-      {/* Input Area */}
-      <div style={{ flexShrink: 0, padding: '12px 16px', paddingBottom: 'max(16px, env(safe-area-inset-bottom))', borderTop: '1px solid #eee', background: 'white' }}>
+      {/* Input Area - Fixed to bottom with safe area padding */}
+      <div style={{ 
+        flexShrink: 0, 
+        padding: '12px 16px', 
+        paddingBottom: 'max(16px, env(safe-area-inset-bottom))', 
+        borderTop: '1px solid #eee', 
+        background: 'white'
+      }}>
         {/* Text Input */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
           <input

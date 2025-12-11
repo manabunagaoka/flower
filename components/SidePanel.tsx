@@ -91,10 +91,10 @@ export default function SidePanel({
         flexDirection: 'column',
         height: '100vh',
         maxHeight: '100vh',
-        overflowY: 'hidden', // Changed from 'auto' to prevent scroll issues
+        overflowY: 'hidden',
         overscrollBehavior: 'none',
         width: '100%',
-        maxWidth: '28rem' // 448px - same as max-w-sm but explicit
+        maxWidth: '28rem'
       }}
           >
             {/* Header */}
