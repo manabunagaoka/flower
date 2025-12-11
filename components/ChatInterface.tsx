@@ -687,11 +687,8 @@ export default function ChatInterface({
       const mediaRecorder = mediaRecorderRef.current!;
       
       mediaRecorder.onstop = async () => {
-        // Stop all tracks
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
+        // DON'T stop the stream here - keep it alive for the conversation
+        // Stream will be stopped when conversation ends (X button or stop)
         
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         audioChunksRef.current = [];
@@ -1284,11 +1281,21 @@ export default function ChatInterface({
                   // Stop recording AND END conversation mode
                   console.log('Stop button pressed - stopping recording AND conversation');
                   conversationActive.current = false; // STOP the conversation loop
+                  // Clean up mic stream since user deliberately stopped
+                  if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(track => track.stop());
+                    streamRef.current = null;
+                  }
                   stopFastRecording();
                 } else if (isSpeaking) {
                   // Stop Flower from speaking and END conversation mode
                   console.log('Stop button pressed - stopping speech, ending conversation');
                   conversationActive.current = false;
+                  // Clean up mic stream since user deliberately stopped
+                  if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(track => track.stop());
+                    streamRef.current = null;
+                  }
                   if (audioRef.current) {
                     audioRef.current.pause();
                     audioRef.current = null;
