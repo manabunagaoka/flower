@@ -5,3 +5,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+// Build trigger Fri Dec 12 02:12:38 UTC 2025
