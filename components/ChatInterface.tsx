@@ -420,27 +420,51 @@ export default function ChatInterface({
     setTextInput('');
     setIsProcessing(true);
     
-    setChatMessages(prev => [...prev, { id: generateMessageId(), text, sender: 'user', timestamp: Date.now() }]);
+    const userMsg = { id: generateMessageId(), text, sender: 'user' as const, timestamp: Date.now() };
+    setChatMessages(prev => [...prev, userMsg]);
     
     try {
-      const history = chatMessagesRef.current.slice(-20).map(m => ({
+      const history = [...chatMessagesRef.current, userMsg].slice(-20).map(m => ({
         role: m.sender === 'user' ? 'user' : 'assistant', content: m.text
       }));
       
-      const res = await fetch(`${VOICE_SERVICE_URL}/chat`, {
+      // Create form data with text override for voice-chat endpoint
+      const formData = new FormData();
+      const silentBlob = new Blob([new ArrayBuffer(1000)], { type: 'audio/webm' });
+      formData.append('audio', silentBlob, 'text.webm');
+      formData.append('conversation_history', JSON.stringify(history));
+      formData.append('text_input', text);
+      
+      const response = await fetch(`${VOICE_SERVICE_URL}/voice-chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, conversation_history: history })
+        body: formData
       });
       
-      if (res.ok) {
-        const data = await res.json();
-        const ts = Date.now();
-        setChatMessages(prev => [...prev, { id: generateMessageId(), text: data.response, sender: 'ai', timestamp: ts }]);
-        setAnimatingMessageId(ts);
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        const textPart = new TextDecoder().decode(new Uint8Array(buffer).slice(0, 5000));
+        const lines = textPart.split('\n');
+        
+        for (const line of lines) {
+          if (line.trim().startsWith('{')) {
+            try {
+              const json = JSON.parse(line.trim());
+              if (json.type === 'response' && json.text) {
+                const ts = Date.now();
+                setChatMessages(prev => [...prev, { id: generateMessageId(), text: json.text, sender: 'ai', timestamp: ts }]);
+                setAnimatingMessageId(ts);
+                break;
+              }
+            } catch { /* skip */ }
+          }
+        }
+      } else {
+        throw new Error('API error');
       }
     } catch (err) {
       console.error('Chat error:', err);
+      const ts = Date.now();
+      setChatMessages(prev => [...prev, { id: generateMessageId(), text: "Please try using the mic button to talk with me.", sender: 'ai', timestamp: ts }]);
     } finally {
       setIsProcessing(false);
     }

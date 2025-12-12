@@ -74,21 +74,20 @@ export default function SidePanel({
             }}
             className="fixed top-0 right-0 bg-white shadow-2xl w-full max-w-sm border-l border-gray-200 flex flex-col"
             style={{
-        position: 'fixed',
-        right: '0',
-        top: '0',
-        zIndex: 100,
-        backgroundColor: '#ffffff',
-        borderLeft: '1px solid #e9ecef',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        maxHeight: '100dvh',
-        overflowY: 'hidden',
-        overscrollBehavior: 'none',
-        width: '100%',
-        maxWidth: '28rem'
-      }}
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 100,
+              backgroundColor: '#ffffff',
+              borderLeft: '1px solid #e9ecef',
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              maxWidth: '28rem',
+              overflowY: 'hidden',
+              overscrollBehavior: 'none'
+            }}
           >
             {/* Header */}
             <div 
