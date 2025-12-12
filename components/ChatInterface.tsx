@@ -414,10 +414,9 @@ export default function ChatInterface({
   };
 
   const handleTextSubmit = async () => {
-    const text = inputRef.current?.value?.trim();
+    const text = textInput.trim();
     if (!text || isProcessing) return;
     
-    inputRef.current!.value = '';
     setTextInput('');
     setIsProcessing(true);
     
@@ -544,11 +543,10 @@ export default function ChatInterface({
         )}
       </div>
 
-      {/* Input Area - with generous bottom padding for mobile Safari */}
+      {/* Input Area - fixed at bottom */}
       <div style={{ 
         flexShrink: 0, 
-        padding: '12px 16px',
-        paddingBottom: 'calc(48px + env(safe-area-inset-bottom, 16px))',
+        padding: '12px 16px 24px 16px',
         borderTop: '1px solid #eee', 
         background: 'white'
       }}>
@@ -557,17 +555,27 @@ export default function ChatInterface({
           <input
             ref={inputRef}
             type="text"
+            value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleTextSubmit(); }}}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSubmit(); }}}
             placeholder="Type a message..."
             disabled={isProcessing}
             style={{ flex: 1, padding: '10px 16px', fontSize: '16px', border: '1px solid #e5e7eb', borderRadius: '20px', outline: 'none', background: '#f9fafb' }}
           />
-          {textInput.trim() && (
-            <button onClick={handleTextSubmit} style={{ padding: '10px', borderRadius: '50%', background: '#22c55e', border: 'none', cursor: 'pointer' }}>
-              <Send size={20} color="white" />
-            </button>
-          )}
+          <button 
+            onClick={handleTextSubmit} 
+            disabled={!textInput.trim() || isProcessing}
+            style={{ 
+              padding: '10px', 
+              borderRadius: '50%', 
+              background: textInput.trim() ? '#22c55e' : '#e5e7eb', 
+              border: 'none', 
+              cursor: textInput.trim() && !isProcessing ? 'pointer' : 'not-allowed',
+              opacity: textInput.trim() ? 1 : 0.5
+            }}
+          >
+            <Send size={20} color="white" />
+          </button>
         </div>
 
         {/* Mic Button */}
